@@ -3,6 +3,7 @@
 // Turn on: twinkly --mode movie
 // Turn off: twinkly --mode off
 // Blink: twinkly -c 128,0,0 -c 0,255,0 -c 64,0,6 --effect blink --delay 500
+// Play reverse engineered binary saved movie from re-movies folder: twinkly --play-movie <movieName>
 
 const {Twinkly} = require("../lib/Twinkly");
 const {Discoverer} = require("../lib/Discoverer");
@@ -16,10 +17,12 @@ let options = commander
     .option("--mode <mode>", "\"off\", \"movie\", or \"demo\"")
     .option("-b, --brightness <brightess>", "Brightness between 1 and 100", parseInt)
     .option("-c, --color <color>", "3 or 4 color bytes, e.g. FF0000 or 255,0,0,0", collect, [])
-    .option("-e, --effect <effect>", "blink, twinkle or loop")
+    .option("-e, --effect <effect>", "blink, twinkle, gradient or loop")
+    .option("-t, --twinkle", "twinkle gradient effect", false)
     .option("-d, --delay <delay>", "Delay in ms between effect frames", parseInt)
     .option("-v, --verbose", "Verbose logging", false)
     .option("--timeout <ms>", "Connection timeout", 5000)
+    .option("--play-movie <movieName>", "Play a predefined movie")
     .parse(process.argv);
 
 if ((options.ip ? 1 : 0) + (options.device ? 1 : 0) + (options.uuid ? 1 : 0) > 1) {
@@ -79,6 +82,8 @@ function run(twinkly, options) {
             promise = twinkly.setBlinkingColors(color, delay);
         } else if (options.effect === "twinkle") {
             promise = twinkly.setTwinklingColors(color, delay);
+        } else if (options.effect === "gradient") {
+            promise = twinkly.setMovingGradient(color, delay, 100, options.twinkle);
         } else if (options.effect === "loop") {
             promise = twinkly.setLoopingColors(color, delay);
         } else {
@@ -87,6 +92,8 @@ function run(twinkly, options) {
         promise.then(() => twinkly.setMode("movie"));
     } else if (options.mode) {
         twinkly.setMode(options.mode).then();
+    } else if (options.playMovie) {
+        twinkly.playSavedMovie(options.playMovie).then(() => console.log(`Playing movie: ${options.playMovie}`));
     }
 }
 
